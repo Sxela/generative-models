@@ -159,16 +159,24 @@ class GeneralConditioner(nn.Module):
                         )
                         * emb
                     )
+                    # print('emb.shape 1', emb.shape)
                 if (
                     hasattr(embedder, "input_key")
                     and embedder.input_key in force_zero_embeddings
                 ):
                     emb = torch.zeros_like(emb)
+                
                 if out_key in output:
+                    if len(emb.shape) == 3:
+                        emb = torch.cat((emb[:, :76, :], emb[:, -1:, :]), dim=1)
+                        output[out_key] = torch.cat((output[out_key][:, :76, :], output[out_key][:, -1:, :]), dim=1)
                     output[out_key] = torch.cat(
                         (output[out_key], emb), self.KEY2CATDIM[out_key]
                     )
                 else:
+                    
+                    if len(emb.shape) == 3:
+                        emb = torch.cat((emb[:, :76, :], emb[:, -1:, :]), dim=1)
                     output[out_key] = emb
         return output
 

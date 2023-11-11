@@ -159,7 +159,6 @@ class GeneralConditioner(nn.Module):
                         )
                         * emb
                     )
-                    # print('emb.shape 1', emb.shape)
                 if (
                     hasattr(embedder, "input_key")
                     and embedder.input_key in force_zero_embeddings

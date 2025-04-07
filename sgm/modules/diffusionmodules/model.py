@@ -1,13 +1,14 @@
 # pytorch_diffusion + derived encoder decoder
 import math
 from typing import Any, Callable, Optional
-
+import torch.nn.functional as F
 import numpy as np
 import torch
 import torch.nn as nn
 from einops import rearrange
 from packaging import version
-
+if version.parse(torch.__version__) >= version.parse("2.0.0"):
+    SDP_IS_AVAILABLE = True
 try:
     import xformers
     import xformers.ops
@@ -243,9 +244,14 @@ class MemoryEfficientAttnBlock(nn.Module):
             .contiguous(),
             (q, k, v),
         )
-        out = xformers.ops.memory_efficient_attention(
-            q, k, v, attn_bias=None, op=self.attention_op
-        )
+        if SDP_IS_AVAILABLE:
+          out = F.scaled_dot_product_attention(q, k, v, attn_mask=None)
+        elif XFORMERS_IS_AVAILABLE:
+          out = xformers.ops.memory_efficient_attention(
+              q, k, v, attn_bias=None, op=self.attention_op
+          )
+        else:
+          raise NotImplementedError
 
         out = (
             out.unsqueeze(0)
